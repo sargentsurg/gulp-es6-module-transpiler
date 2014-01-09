@@ -23,6 +23,13 @@ module.exports = function (opts) {
 			if(opts.moduleName) {
 				moduleName = opts.moduleName;
 			}
+			
+			var fileName = file.path.split("/");
+            
+			moduleName = "appkit/"+fileName[fileName.length-2]+"/"+fileName[fileName.length-1].replace(/\.[^/.]+$/, "");
+			if(fileName[fileName.length-1].replace(/\.[^/.]+$/, "") == "app" || fileName[fileName.length-1].replace(/\.[^/.]+$/, "") == "router" ){
+			    moduleName = "appkit/"+fileName[fileName.length-1].replace(/\.[^/.]+$/, "");
+			}
 
 			compiler = new Compiler(String(file.contents), moduleName, opts);
 
