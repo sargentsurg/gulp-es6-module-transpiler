@@ -1,44 +1,35 @@
 var es = require("event-stream");
 var Compiler = require("es6-module-transpiler").Compiler;
-var fs = require("fs");
+var path = require("path");
 
-module.exports = function(opts) {
+module.exports = function (opts) {
     "use strict";
-
-    // if(typeof name == 'object') {
-    // 	opts = name;
-    // 	//name = '';
-    // }
 
     // see "Writing a plugin"
     // https://github.com/wearefractal/gulp/wiki/Writing-a-gulp-plugin
     function es6ModuleTranspiler(file, callback) {
         // check if file.contents is a `Buffer`
         if (file.contents instanceof Buffer) {
-            var moduleName = '',
+            var moduleName = null,
+                ext = path.extname(file.path),
                 method,
                 contents,
                 compiler;
 
-            if (opts.moduleName) {
+            if (typeof opts.moduleName === "string") {
                 moduleName = opts.moduleName;
+            } else {
+                moduleName = file.relative.slice(0, -ext.length);
+
+                if (opts.moduleName) {
+                    moduleName = opts.moduleName(moduleName, file);
+                }
             }
 
-            var fileName = file.path.split("/");
-
-            moduleName = "appkit/" + fileName[fileName.length - 2] + "/" + fileName[fileName.length - 1].replace(/\.[^/.]+$/, "");
-            if (fileName[fileName.length - 1].replace(/\.[^/.]+$/, "") == "app" || fileName[fileName.length - 1].replace(/\.[^/.]+$/, "") == "router") {
-                moduleName = "appkit/" + fileName[fileName.length - 1].replace(/\.[^/.]+$/, "");
+            if(opts.namespace){
+                moduleName =  opts.namespace+"/"+moduleName;
             }
-
-            if (fileName[fileName.length - 4] == "tests") {
-                moduleName = "appkit/tests/" + fileName[fileName.length - 3] + "/" + fileName[fileName.length - 2] + "/" + fileName[fileName.length - 1].replace(/\.[^/.]+$/, "");
-            }
-
-            if (fileName[fileName.length - 3] == "tests") {
-                moduleName = "appkit/tests/" + fileName[fileName.length - 2] + "/" + fileName[fileName.length - 1].replace(/\.[^/.]+$/, "");
-            };
-
+            
             compiler = new Compiler(String(file.contents), moduleName, opts);
 
             switch (opts.type) {
@@ -55,8 +46,8 @@ module.exports = function(opts) {
                     method = "toGlobals";
             }
 
-            contents = compiler[method].apply(compiler);
-            file.contents = new Buffer(String(contents));
+            contents = compiler[method].call(compiler);
+            file.contents = new Buffer(contents);
 
             callback(null, file);
         } else { // assume it is a `stream.Readable`
