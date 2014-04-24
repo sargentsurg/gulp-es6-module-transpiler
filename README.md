@@ -33,6 +33,10 @@ Type: `String`
 Type: `String`  
 Default: `''`
 
+#### options.namespace
+Type: `String`  
+Default: `''`
+
 #### options.exports
 Type: `Object`  
 
